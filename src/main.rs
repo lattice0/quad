@@ -14,7 +14,7 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        //.add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(setup_graphics)
         .add_startup_system(setup_physics)
         .add_system(print_ball_altitude)
@@ -69,6 +69,12 @@ fn setup_physics(
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
             ..default()
         })
+        .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, 4.0, 0.0)));
+    commands
+        .spawn()
+        .insert(RigidBody::Dynamic)
+        .insert(Collider::cuboid(0.1, 0.1, 1.0))
+        .insert(Restitution::coefficient(0.7))
         .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, 4.0, 0.0)));
 }
 

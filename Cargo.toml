@@ -6,4 +6,4 @@ resolver="2"
 
 [dependencies]
 bevy = "0.8.0"
-bevy_rapier3d = { version = "0.16.0", features = [ "simd-stable", "dim3"], default-features=false }
+bevy_rapier3d = { version = "0.16.0", features = [ "simd-stable", "dim3",  "debug-render"], default-features=false }
