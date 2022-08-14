@@ -52,14 +52,12 @@ fn setup_physics(
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
-    
+
     //Drone
-    let x_shape: Handle<Mesh> = asset_server.load("quad.gltf");
-    let x_shape = Collider::from_bevy_mesh(
-        &meshes.get(&x_shape).unwrap(),
-        &ComputedColliderShape::TriMesh,
-    )
-    .unwrap();
+    let x_shape: Handle<Mesh> = asset_server.load("quad.gltf#Mesh0/Primitive0");
+
+    let m = &meshes.get(&x_shape);
+    let x_shape = Collider::from_bevy_mesh(m.unwrap(), &ComputedColliderShape::TriMesh).unwrap();
     commands
         .spawn()
         .insert(RigidBody::Dynamic)
