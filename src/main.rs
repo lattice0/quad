@@ -5,9 +5,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_rapier3d::prelude::*;
-use fps::{change_text_system, infotext_system};
 
-mod fps;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -17,14 +15,10 @@ fn main() {
         .add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(setup_graphics)
         .add_startup_system(setup_physics)
-        .add_system(print_ball_altitude)
-        .add_startup_system(infotext_system)
-        .add_system(change_text_system)
         .run();
 }
 
 fn setup_graphics(mut commands: Commands) {
-    // Add a camera so we can see the debug-render.
     commands.spawn_bundle(Camera3dBundle {
         camera: Camera {
             priority: 1,
@@ -37,9 +31,11 @@ fn setup_graphics(mut commands: Commands) {
 
 fn setup_physics(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    //Floor
     commands
         .spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Plane { size: 100.0 })),
@@ -56,30 +52,18 @@ fn setup_physics(
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
+    
+    //Drone
+    let x_shape: Handle<Mesh> = asset_server.load("quad.gltf");
+    let x_shape = Collider::from_bevy_mesh(
+        &meshes.get(&x_shape).unwrap(),
+        &ComputedColliderShape::TriMesh,
+    )
+    .unwrap();
     commands
         .spawn()
         .insert(RigidBody::Dynamic)
-        .insert(Collider::ball(0.1))
-        .insert(Restitution::coefficient(0.7))
-        .insert_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::UVSphere {
-                radius: 0.1,
-                ..default()
-            })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-            ..default()
-        })
-        .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, 4.0, 0.0)));
-    commands
-        .spawn()
-        .insert(RigidBody::Dynamic)
-        .insert(Collider::cuboid(0.1, 0.1, 1.0))
+        .insert(x_shape)
         .insert(Restitution::coefficient(0.7))
         .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, 4.0, 0.0)));
-}
-
-fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
-    for _transform in positions.iter() {
-        //println!("Ball altitude: {}", transform.translation.y);
-    }
 }
