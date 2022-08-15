@@ -1,5 +1,7 @@
 extern crate bevy;
 extern crate bevy_rapier3d;
+use std::sync::atomic::AtomicBool;
+
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
@@ -13,9 +15,44 @@ fn main() {
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierDebugRenderPlugin::default())
+        .add_startup_system(setup)
         .add_startup_system(setup_graphics)
-        .add_startup_system(setup_physics)
+        .add_system(check_assets_ready)
+        .init_resource::<AssetsLoading>()
         .run();
+}
+
+#[derive(Default)]
+struct AssetsLoading(Vec<HandleUntyped>);
+
+fn setup(server: Res<AssetServer>, mut loading: ResMut<AssetsLoading>) {
+    let x_shape: Handle<Mesh> = server.load("quad.gltf#Mesh0/Primitive0");
+    loading.0.push(x_shape.clone_untyped());
+}
+
+fn check_assets_ready(
+    commands: Commands,
+    server: Res<AssetServer>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    loading: Res<AssetsLoading>,
+) {
+    use bevy::asset::LoadState;
+    static SETUP_PHYSICS_CALLED: AtomicBool = AtomicBool::new(false);
+    match server.get_group_load_state(loading.0.iter().map(|h| h.id)) {
+        LoadState::Failed => {
+            // one of our assets had an error
+        }
+        LoadState::Loaded => {
+            if !SETUP_PHYSICS_CALLED.load(std::sync::atomic::Ordering::Relaxed) {
+                setup_physics(commands, server, meshes, materials);
+                SETUP_PHYSICS_CALLED.store(true, std::sync::atomic::Ordering::Relaxed);
+            }
+        }
+        _ => {
+            // NotLoaded/Loading: not fully ready yet
+        }
+    }
 }
 
 fn setup_graphics(mut commands: Commands) {
